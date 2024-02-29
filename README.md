@@ -15,3 +15,5 @@ Mathematics concepts in machine learning:
     2e. Optimization using Newton's method  
 
 3. Probability and statistics    
+    3a. Naive bayes
+    3b. Fair and loaded dice game
