@@ -1,536 +1,76 @@
-import json
-from IPython.display import display
-import ipywidgets as widgets
-from ipywidgets import interact
+# -*- coding: utf-8 -*-
+# +
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import pandas as pd
+from sklearn.inspection import permutation_importance
 
 
+FONT_SIZE_TICKS = 14
+FONT_SIZE_TITLE = 20
+FONT_SIZE_AXES = 16
 
 
-def reset_answers():
-    with open("answers.json", "w") as f:
-        json.dump({}, f)
+def calculate_feature_importance(features, lr, X_test, y_test):
+    if len(features) > 1:
+        bunch = permutation_importance(
+            lr, X_test, y_test, n_repeats=10, random_state=42
+        )
+        imp_means = bunch.importances_mean
+        ordered_imp_means_args = np.argsort(imp_means)[::-1]
 
-        
-        
-def exercise_1():
-    mean = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='Mean:',
-        disabled=False   
+        results = {}
+        for i in ordered_imp_means_args:
+            name = list(X_test.columns)[i]
+            imp_score = imp_means[i]
+            results.update({name: [imp_score]})
+
+        most_important = list(X_test.columns)[ordered_imp_means_args[0]]
+        results_df = pd.DataFrame.from_dict(results)
+
+        return most_important, results_df
+    
+    else:
+        return features[0], None
+
+
+def plot_feature_importance(df):
+    # Create a plot for feature importance
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.set_xlabel("Importance Score", fontsize=FONT_SIZE_AXES)
+    ax.set_ylabel("Feature", fontsize=FONT_SIZE_AXES)
+    ax.set_title("Feature Importance", fontsize=FONT_SIZE_TITLE)
+    ax.tick_params(labelsize=FONT_SIZE_TICKS)
+
+    sns.barplot(data=df, orient="h", ax=ax, color="deepskyblue")
+
+    plt.show()
+
+    
+def plot_happiness(variable, x1, y1, x2, y2):
+    """Plots a predictor variable on x-axis and happiness (life ladder) on y axis.
+
+    Args:
+        variable: The name of the x axis variable
+        x1, y1: The x, y original data to be plotted. Both can be None if not available.
+        x2, y2: The x, y data model to be plotted. Both can be None if not available.
+    """
+    # Create the plot
+    fig, ax = plt.subplots(figsize=(8, 6))
+    # Plot the original data
+    ax.scatter(
+        x1, y1, color="blue", edgecolors="white", s=15, label="Training Data"
     )
-
-    var = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='Variance:',
-        disabled=False   
-    )
-
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(mean)
-    display(var)
-#     display(cov)
-    
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex1": {
-                "mean": mean.value,
-                "var": var.value,
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 1 saved.")
-            
-
-    button.on_click(on_button_clicked)
-
-    
-def exercise_2():
-    hist = widgets.ToggleButtons(
-        options=['left', 'center', 'right'],
-        description='Your answer:',
-        disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(hist)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex2": {
-                "hist": hist.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 2 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-def exercise_3():
-    sum_2_8 = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='P for sum=2|8',
-        style = {'description_width': 'initial'},
-        disabled=False   
-    )
-
-    sum_3_7 = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='P for sum=3|7:',
-        style = {'description_width': 'initial'},
-        disabled=False   
-    )
-
-    sum_4_6 = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='P for sum=4|6:',
-        style = {'description_width': 'initial'},
-        disabled=False   
+    # Plot the model
+    ax.scatter(
+        x2, y2,
+        color="orange", edgecolors="black", s=15, marker="D", label="Predictions on the Test Set"
     )
     
-    sum_5 = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='P for sum=5:',
-        style = {'description_width': 'initial'},
-        disabled=False   
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(sum_2_8)
-    display(sum_3_7)
-    display(sum_4_6)
-    display(sum_5)
-    
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex3": {
-                "sum_2_8": sum_2_8.value,
-                "sum_3_7": sum_3_7.value,
-                "sum_4_6": sum_4_6.value,
-                "sum_5": sum_5.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 3 saved.")
-            
-
-    button.on_click(on_button_clicked)
-
-def exercise_4():
-    mean = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='Mean:',
-        disabled=False   
-    )
-
-    var = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='Variance:',
-        disabled=False   
-    )
-
-    cov = widgets.FloatText(
-#         value='',
-        placeholder=0.0,
-        description='Covariance:',
-        disabled=False   
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(mean)
-    display(var)
-    display(cov)
-    
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex4": {
-                "mean": mean.value,
-                "var": var.value,
-                "cov": cov.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 4 saved.")
-            
-
-    button.on_click(on_button_clicked)
-
-    
-def exercise_5():
-    hist = widgets.ToggleButtons(
-        options=['left', 'center', 'right'],
-        description='Your answer:',
-        disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(hist)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex5": {
-                "hist": hist.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 5 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-
-def exercise_6():
-    max_sum = widgets.IntSlider(
-        value=2,
-        min=2,
-        max=12,
-        step=1,
-        description='Sum:',
-        disabled=False,
-        continuous_update=False,
-        orientation='horizontal',
-        readout=True,
-        readout_format='d'
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(max_sum)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex6": {
-                "max_sum": max_sum.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 6 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-def exercise_7():
-    hist = widgets.ToggleButtons(
-        options=['left-most', 'left-center', 'right-center', 'right-most'],
-        description='Your answer:',
-        disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(hist)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex7": {
-                "hist": hist.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 7 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-def exercise_8():
-    hist = widgets.ToggleButtons(
-        options=['left-most', 'left-center', 'right-center', 'right-most'],
-        description='Your answer:',
-        disabled=False,
-        button_style='', # 'success', 'info', 'warning', 'danger' or ''
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(hist)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex8": {
-                "hist": hist.value
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 8 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-def exercise_9():
-    mean = widgets.ToggleButtons(
-        options=['stays the same', 'increases', 'decreases'],
-        description='The mean of the sum:',
-        disabled=False,
-        button_style='',
-    )
-    
-    var = widgets.ToggleButtons(
-        options=['stays the same', 'increases', 'decreases'],
-        description='The variance of the sum:',
-        disabled=False,
-        button_style='',
-    )
-    
-    cov = widgets.ToggleButtons(
-        options=['stays the same', 'increases', 'decreases'],
-        description='The covariance of the joint distribution:',
-        disabled=False,
-        button_style='',
-    )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    print("As the number of sides in the die increases:")
-    display(mean)
-    display(var)
-    display(cov)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex9": {
-                "mean": mean.value,
-                "var": var.value,
-                "cov": cov.value,
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 9 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-
-def exercise_10():
-    options = widgets.RadioButtons(
-                options=[
-                    'the mean and variance is the same regardless of which side is loaded', 
-                    'having the sides 3 or 4 loaded will yield a higher covariance than any other sides', 
-                    'the mean will decrease as the value of the loaded side increases', 
-                    'changing the loaded side from 1 to 6 will yield a higher mean but the same variance'
-                ],
-                layout={'width': 'max-content'}
-            )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(options)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex10": {
-                "options": options.value,
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 10 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-def exercise_11():
-    options = widgets.RadioButtons(
-                options=[
-                    'yes, but only if one of the sides is loaded', 
-                    'no, regardless if the die is fair or not', 
-                    'yes, but only if the die is fair', 
-                    'yes, regardless if the die is fair or not'
-                ],
-                layout={'width': 'max-content'}
-            )
-    
-    button = widgets.Button(description="Save your answer!", button_style="success")
-    output = widgets.Output()
-    
-    display(options)
-
-    display(button, output)
-
-    def on_button_clicked(b):
-        
-        with open("answers.json", "r") as f:
-            source_dict = json.load(f)
-            
-        answer_dict = {
-            "ex11": {
-                "options": options.value,
-            }
-        }
-        
-        source_dict.update(answer_dict)
-        
-        with open("answers.json", "w") as f:
-            json.dump(source_dict, f)
-            
-        with output:
-            print("Answer for exercise 11 saved.")
-            
-
-    button.on_click(on_button_clicked)
-    
-    
-def check_submissions():
-    with open("./answers.json", "r") as f:
-        answer_dict = json.load(f)
-        
-    saved_exercises = [k for k in answer_dict.keys()]
-    expected = ['ex1', 'ex2', 'ex3', 'ex4', 'ex5', 'ex6', 'ex7', 'ex8', 'ex9', 'ex10', 'ex11']
-    missing = [e for e in expected if not e in saved_exercises]
-    
-    if missing:
-        print(f"missing answers for exercises {[ex.split('ex')[1] for ex in missing]}\n\nSave your answers before submitting for grading!")
-        return
-    
-    print("All answers saved, you can submit the assignment for grading!")
+    variable_title = " ".join(variable.split("_")).title()
+    ax.set_xlabel(f"{variable_title}", fontsize=FONT_SIZE_AXES)
+    ax.set_ylabel("Life Lsadder (1-10)", fontsize=FONT_SIZE_AXES)
+    ax.set_title(f"Happiness vs. {variable_title}", fontsize=FONT_SIZE_TITLE)
+    ax.tick_params(labelsize=FONT_SIZE_TICKS)
+    ax.legend(fontsize=FONT_SIZE_TICKS)
